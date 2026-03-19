@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const API = axios.create({
-  //baseURL: "/api/snippets"
-  baseURL : import.meta.env.VITE_API_URL
+  baseURL: "/api/snippets"
+  //baseURL : import.meta.env.VITE_API_URL
 });
 
 export const getSnippets = () => API.get("");
