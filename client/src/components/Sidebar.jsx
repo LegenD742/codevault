@@ -1,5 +1,6 @@
 import React from 'react'
-import { Trash2, Pencil } from "lucide-react";
+import Icon from './Icon';
+import { Trash2, Pencil, X } from "lucide-react";
 
 const Sidebar = ({ 
   snippets, 
@@ -7,7 +8,9 @@ const Sidebar = ({
   selectedSnippet, 
   handleDelete,
   setEditingSnippet,
-  setShow
+  setShow,
+  sidebarOpen,
+  setSidebarOpen
 }) => {
 
   const groupedSnippets = {
@@ -23,12 +26,36 @@ const Sidebar = ({
   });
 
   return (
-    <div className="w-64 bg-[#1C2541] text-white p-4 h-full overflow-y-auto">
+    <div
+      className={`
+        fixed md:static top-0 left-0 h-full z-50
+        w-64 bg-[#1C2541] p-4 overflow-y-auto
+        transform transition-transform duration-300
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        md:translate-x-0
+      `}
+    >
 
-      <h2 className="text-lg font-semibold mb-4 text-[#00D1FF]">
-        Snippets
-      </h2>
+      {/* Top Section */}
+      <div className="flex items-center justify-between mb-4">
+        
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-[#00D1FF]">
+            Snippets
+          </h2>
+        </div>
 
+        {/* Close button (mobile only) */}
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="md:hidden text-white"
+        >
+          <X size={22} />
+        </button>
+
+      </div>
+
+      {/* Snippets */}
       {Object.keys(groupedSnippets).map((lang) => (
         <div key={lang} className="mb-4">
 
@@ -48,7 +75,10 @@ const Sidebar = ({
             >
               {/* Select */}
               <span
-                onClick={() => setSelectedSnippet(snippet)}
+                onClick={() => {
+                  setSelectedSnippet(snippet);
+                  setSidebarOpen(false); // 🔥 auto close on mobile
+                }}
                 className="flex-1"
               >
                 {snippet.title}
