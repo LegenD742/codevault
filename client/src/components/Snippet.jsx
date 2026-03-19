@@ -4,7 +4,7 @@ import { createSnippet, updateSnippet } from "../services/snippetApi";
 
 const Snippet = ({
   setShow,
-  snippets,
+  snippets = [],
   editingSnippet,
   setEditingSnippet,
   setSelectedSnippet,
@@ -27,112 +27,146 @@ const Snippet = ({
     }
   }, [editingSnippet]);
 
-  const handleSubmit = async () => {
-    console.log("CLICKED SAVE");
+ const handleSubmit = async () => {
 
-    if (!title.trim() || !code.trim()) {
-      toast.error("Title and code BOTH are required!");
-      return;
+  if (!title.trim() || !code.trim()) {
+    toast.error("Title and code are required!");
+    return;
+  }
+
+  const exists = snippets.some(
+    s =>
+      s.title.trim().toLowerCase() === title.trim().toLowerCase() &&
+      s._id !== editingSnippet?._id
+  );
+
+  if (exists) {
+    toast.error("Snippet with same name exists!");
+    return;
+  }
+
+  try {
+    let res;
+
+    if (editingSnippet) {
+      // 🔥 UPDATE
+      res = await updateSnippet(editingSnippet._id, {
+        title,
+        language,
+        code
+      });
+
+      toast.success("Snippet updated!");
+
+      // keep it selected after update
+      setSelectedSnippet(res.data);
+
+    } else {
+      // 🔥 CREATE
+      res = await createSnippet({
+        title,
+        language,
+        code
+      });
+
+      toast.success("Snippet created!");
+
+      // auto select new snippet
+      setSelectedSnippet(res.data);
     }
 
-    const exists = snippets.some(
-      s =>
-        s.title.trim().toLowerCase() === title.trim().toLowerCase() &&
-        s._id !== editingSnippet?._id
-    );
+    await fetchSnippets();
 
-    if (exists) {
-      toast.error("Snippet with this name already exists!");
-      return;
-    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Something went wrong!");
+  }
 
-    try {
-      if (editingSnippet) {
-        
-        const res = await updateSnippet(editingSnippet._id, {
-          title,
-          language,
-          code
-        });
-
-        setSelectedSnippet(res.data);
-        toast.success("Snippet updated ✏️");
-
-      } else {
-        
-        const res = await createSnippet({
-          title,
-          language,
-          code
-        });
-
-        setSelectedSnippet(res.data);
-        toast.success("Snippet added 🚀");
-      }
-
-      await fetchSnippets();
-
-      setEditingSnippet(null);
-      setShow(false);
-
-    } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong ❌");
-    }
-  };
+  setEditingSnippet(null);
+  setShow(false);
+};
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2">
 
-      <div className="bg-[#1C2541] p-6 rounded-xl w-[80vw] max-w-5xl h-[80vh] flex flex-col shadow-[0_0_30px_rgba(58,134,255,0.2)]">
+      {/* Modal */}
+      <div className="
+        bg-[#1C2541] rounded-xl w-full h-full 
+        md:w-[80vw] md:max-w-5xl md:h-[80vh]
+        flex flex-col overflow-hidden
+      ">
 
-        <h2 className="text-2xl mb-4 text-[#00D1FF] font-semibold">
-          {editingSnippet ? "Edit Snippet ✏️" : "Add Snippet ⚡"}
-        </h2>
-
-        <div className="flex gap-4 mb-4">
-
-          <input
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="flex-1 p-2 rounded bg-[#0B132B] outline-none focus:ring-2 focus:ring-[#3A86FF]"
-          />
-
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="w-40 p-2 rounded bg-[#0B132B] outline-none"
-          >
-            <option value="js">JavaScript</option>
-            <option value="cpp">C++</option>
-            <option value="java">Java</option>
-          </select>
-
-        </div>
-
-        <textarea
-          placeholder="Paste your code..."
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          className="flex-1 p-3 rounded bg-[#0B132B] font-mono text-sm resize-none outline-none focus:ring-2 focus:ring-[#3A86FF]"
-        />
-
-        <div className="flex justify-end gap-3 mt-4">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 border-b border-[#0B132B]">
+          <h2 className="text-lg md:text-2xl text-[#00D1FF] font-semibold">
+            {editingSnippet ? "Edit Snippet ✏️" : "Add Snippet ⚡"}
+          </h2>
 
           <button
             onClick={() => {
               setEditingSnippet(null);
               setShow(false);
             }}
-            className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500 transition"
+            className="text-gray-400 hover:text-white text-xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-col gap-3 p-3 md:p-4 overflow-auto">
+
+          {/* Inputs */}
+          <div className="flex flex-col md:flex-row gap-3">
+
+            <input
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="flex-1 p-2 rounded bg-[#0B132B] outline-none"
+            />
+
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="w-full md:w-40 p-2 rounded bg-[#0B132B]"
+            >
+              <option value="js">JavaScript</option>
+              <option value="cpp">C++</option>
+              <option value="java">Java</option>
+            </select>
+
+          </div>
+
+          {/* Code Area */}
+          <textarea
+            placeholder="Paste your code..."
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="
+              flex-1 p-3 rounded bg-[#0B132B] font-mono text-sm resize-none
+              min-h-[200px] md:min-h-[300px]
+            "
+          />
+
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-2 md:gap-3 p-3 md:p-4 border-t border-[#0B132B]">
+
+          <button
+            onClick={() => {
+              setEditingSnippet(null);
+              setShow(false);
+            }}
+            className="px-3 md:px-4 py-2 bg-gray-600 rounded-lg text-sm md:text-base"
           >
             Cancel
           </button>
 
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 bg-[#3A86FF] rounded-lg hover:bg-[#00D1FF] transition"
+            className="px-3 md:px-4 py-2 bg-[#3A86FF] rounded-lg hover:bg-[#00D1FF] transition text-sm md:text-base"
           >
             {editingSnippet ? "Update" : "Save"}
           </button>
