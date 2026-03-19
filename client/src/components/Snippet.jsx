@@ -145,7 +145,7 @@ const Snippet = ({
             onChange={(e) => setCode(e.target.value)}
             className="
               flex-1 p-3 rounded bg-[#0B132B] font-mono text-sm resize-none
-              min-h-[200px] md:min-h-[300px]
+              min-h-50 md:min-h-75
             "
           />
 
